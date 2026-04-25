@@ -1,0 +1,174 @@
+// This is your Prisma schema file for SQLite testing
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String   @id @default(cuid())
+  name             String
+  phone            String   @unique
+  passwordHash     String
+  role             String   @default("MEMBER")
+  membershipNumber String?  @unique
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  refreshTokens       RefreshToken[]
+  memberSubscriptions MemberSubscription[]
+  workoutLogs         WorkoutLog[]
+  bodyStats           BodyStat[]
+  payments            Payment[]
+  checkIns            CheckIn[]
+  workoutPrograms     WorkoutProgram[]
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique 
+  userId    String
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Subscription {
+  id          String   @id @default(cuid())
+  name        String
+  durationDays Int
+  price       Float  
+  description String?  
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  memberSubscriptions MemberSubscription[]
+  payments            Payment[]
+}
+
+model MemberSubscription {
+  id             String             @id @default(cuid())
+  userId         String
+  subscriptionId String
+  startDate      DateTime
+  endDate        DateTime
+  status         String @default("ACTIVE")
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription Subscription @relation(fields: [subscriptionId], references: [id])
+
+  @@index([userId])
+  @@index([subscriptionId])
+}
+
+model WorkoutLog {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime 
+  completed Boolean  @default(false)
+  bodyWeight Float?
+  notes     String?  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workoutSets WorkoutSet[]
+
+  @@unique([userId, date])
+  @@index([userId])
+}
+
+model Exercise {
+  id          String   @id @default(cuid())
+  name        String
+  muscleGroup String?
+  videoUrl    String?
+  createdAt   DateTime @default(now())
+
+  workoutSets     WorkoutSet[]
+  workoutPrograms WorkoutProgram[]
+}
+
+model WorkoutProgram {
+  id         String   @id @default(cuid())
+  userId     String
+  exerciseId String
+  dayName    String   @default("General") // e.g., "Day 1", "Chest Day"
+  setsCount  Int      @default(3)
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercise Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, exerciseId, dayName])
+}
+
+model WorkoutSet {
+  id           String @id @default(cuid())
+  workoutLogId String
+  exerciseId   String
+  setNumber    Int    @default(1)
+  reps         Int    @default(0)
+  weight       Float  @default(0)
+  targetReps   Int?
+  targetWeight Float?
+
+  workoutLog WorkoutLog @relation(fields: [workoutLogId], references: [id], onDelete: Cascade)
+  exercise   Exercise   @relation(fields: [exerciseId], references: [id])
+
+  @@index([workoutLogId])
+  @@index([exerciseId])
+}
+
+model BodyStat {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime 
+  weight    Float
+  bodyFat   Float?
+  notes     String?  
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  userId         String
+  subscriptionId String?
+  amount         Float       
+  date           DateTime      @default(now())
+  method         String @default("CASH")
+  notes          String?       
+  createdAt      DateTime      @default(now())
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  @@index([userId])
+}
+
+model CheckIn {
+  id        String        @id @default(cuid())
+  userId    String
+  timestamp DateTime      @default(now())
+  method    String @default("MANUAL")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
