@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import { AsyncParser } from 'json2csv';
 
 const prisma = new PrismaClient();
 
@@ -30,8 +29,9 @@ export const ExportService = {
       };
     });
 
-    const parser = new AsyncParser();
-    return await parser.parse(data).promise();
+    const headers = Object.keys(data[0] || {});
+    const rows = data.map(row => headers.map(h => `"${(row as Record<string, string>)[h] ?? ''}"`).join(','));
+    return [headers.join(','), ...rows].join('\n');
   },
 
   async getPaymentsCsv(): Promise<string> {
@@ -54,8 +54,9 @@ export const ExportService = {
       Notes: p.notes || ''
     }));
 
-    const parser = new AsyncParser();
-    return await parser.parse(data).promise();
+    const headers = Object.keys(data[0] || {});
+    const rows = data.map(row => headers.map(h => `"${(row as Record<string, string>)[h] ?? ''}"`).join(','));
+    return [headers.join(','), ...rows].join('\n');
   },
 
   async getWorkoutsCsv(): Promise<string> {
@@ -84,13 +85,14 @@ export const ExportService = {
         Date: w.date.toISOString().split('T')[0],
         'Member Name': w.user.name,
         Exercise: set.exercise.name,
-        Set: set.setNumber,
-        Reps: set.reps,
-        Weight: set.weight
+        Set: String(set.setNumber),
+        Reps: String(set.reps),
+        Weight: String(set.weight)
       }));
     });
 
-    const parser = new AsyncParser();
-    return await parser.parse(data).promise();
+    const headers = Object.keys(data[0] || {});
+    const rows = data.map(row => headers.map(h => `"${(row as Record<string, string>)[h] ?? ''}"`).join(','));
+    return [headers.join(','), ...rows].join('\n');
   }
 };

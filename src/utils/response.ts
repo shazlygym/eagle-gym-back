@@ -23,7 +23,7 @@ export const sendSuccess = <T>(
     success: true,
     message,
     data,
-    ...(meta && { meta }),
+    ...(meta ? { meta } : {}),
   });
 };
 
@@ -36,6 +36,6 @@ export const sendError = (
   return res.status(statusCode).json({
     success: false,
     message,
-    ...(errors && { errors }),
+    ...(errors ? { errors } : {}),
   });
 };
