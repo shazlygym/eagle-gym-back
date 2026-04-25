@@ -81,6 +81,7 @@ export const workoutController = {
     try {
       const { userId, ...data } = adminAddSetSchema.parse(req.body);
       const log = await workoutService.getTodayLog(userId, req.query.date as string);
+      if (!log) throw new Error('Workout log not found');
       const set = await workoutService.addSetToLog(log.id, userId, data);
       sendSuccess(res, set, 'Set added by admin', 201);
     } catch (err) { next(err); }

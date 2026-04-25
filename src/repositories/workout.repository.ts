@@ -97,12 +97,15 @@ export const workoutRepository = {
     });
   },
 
-  async removeFromProgram(userId: string, exerciseId: string) {
+async removeFromProgram(userId: string, exerciseId: string) {
+    const item = await prisma.workoutProgram.findFirst({
+      where: { userId, exerciseId },
+    });
+    if (!item) throw new Error('Program item not found');
     return prisma.workoutProgram.delete({
-      where: { userId_exerciseId: { userId, exerciseId } },
+      where: { id: item.id },
     });
   },
-
   async getLogById(id: string) {
     return prisma.workoutLog.findUnique({
       where: { id },

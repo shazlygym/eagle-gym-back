@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { analyticsService } from '../services/analytics.service';
 import { sendSuccess } from '../utils/response';
+import { AuthRequest } from '../middleware/auth.middleware';
 
 export const analyticsController = {
   async getDashboard(req: Request, res: Response, next: NextFunction) {
@@ -26,7 +27,7 @@ export const analyticsController = {
     } catch (err) { next(err); }
   },
 
-  async getMyAnalytics(req: Request, res: Response, next: NextFunction) {
+  async getMyAnalytics(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const data = await analyticsService.getMemberAnalytics(req.user!.userId);
       sendSuccess(res, data, 'My analytics');
@@ -41,7 +42,7 @@ export const analyticsController = {
     } catch (err) { next(err); }
   },
 
-  async logStats(req: Request, res: Response, next: NextFunction) {
+  async logStats(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const schema = z.object({
         weight: z.number().min(20).max(300),
